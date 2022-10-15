@@ -1,17 +1,39 @@
-/**
- * Metro configuration for React Native
- * https://github.com/facebook/react-native
- *
- * @format
- */
+const path = require('path');
 
-module.exports = {
-  transformer: {
-    getTransformOptions: async () => ({
-      transform: {
-        experimentalImportSupport: false,
-        inlineRequires: true,
-      },
-    }),
-  },
-};
+const exclusionList = require('metro-config/src/defaults/exclusionList');
+const escape = require('escape-string-regexp');
+
+const modules = Object.keys({
+  ...require('../flash-list/package.json').peerDependencies,
+});
+
+const root = path.resolve(__dirname, '../flash-list');
+
+const watchFolders = [root, path.join(__dirname, './node_modules')];
+
+module.exports = (() => {
+  return {
+    projectRoot: __dirname,
+    transformer: {
+      getTransformOptions: () => ({
+        transform: {
+          experimentalImportSupport: false,
+          inlineRequires: true,
+        },
+      }),
+    },
+    resolver: {
+      blockList: exclusionList(
+        modules.map(
+          m =>
+            new RegExp(`^${escape(path.join(root, 'node_modules', m))}\\/.*$`),
+        ),
+      ),
+      extraNodeModules: modules.reduce((acc, name) => {
+        acc[name] = path.join(__dirname, 'node_modules', name);
+        return acc;
+      }, {}),
+    },
+    watchFolders,
+  };
+})();

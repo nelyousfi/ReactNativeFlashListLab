@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
-    "@shopify/flash-list": "^1.2.2",
+    "@shopify/flash-list": "link:../flash-list/",
     "react": "18.1.0",
     "react-native": "0.70.1"
   },
