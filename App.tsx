@@ -1,7 +1,8 @@
 import {FlashList} from '@shopify/flash-list';
-import React, {ReactNode, useRef, useState} from 'react';
+import React, {ReactNode, useCallback, useMemo, useRef, useState} from 'react';
 import {
   Dimensions,
+  FlatList,
   LayoutAnimation,
   Pressable,
   SafeAreaView,
@@ -32,52 +33,73 @@ const layoutProvider = new LayoutProvider(
   },
 );
 
-const dataProvider = new DataProvider((r1, r2) => {
-  return r1 !== r2;
-}).cloneWithRows(generateItems(10000));
-
 let counter = 0;
 
 const CellContainer = ({
   type,
   children,
+  onPress,
 }: {
   type: 'grey' | 'white';
   children: ReactNode;
+  onPress: () => void;
 }) => {
   const count = useRef(counter++);
+
   return (
-    <View
+    <Pressable
       style={{
         flex: 1,
-        backgroundColor: type,
-      }}>
-      <Text>{count.current}</Text>
-      {children}
-    </View>
+      }}
+      onPress={onPress}>
+      <View
+        style={{
+          backgroundColor: type,
+        }}>
+        <Text>{count.current}</Text>
+        {children}
+      </View>
+    </Pressable>
   );
 };
 
-const rowRender = (viewTypes: string | number, data: number) => {
-  switch (viewTypes) {
-    case ViewTypes.GREY:
-      return (
-        <CellContainer type="grey">
-          <Text>Data: {data}</Text>
-        </CellContainer>
-      );
-    case ViewTypes.WHITE:
-      return (
-        <CellContainer type="white">
-          <Text>Data: {data}</Text>
-        </CellContainer>
-      );
-    default:
-      return null;
-  }
-};
+const provider = new DataProvider((r1, r2) => {
+  return r1 !== r2;
+});
 
 const Recycler = () => {
+  const [items, setItems] = useState(generateItems(1000));
+
+  const dataProvider = useMemo(() => {
+    return provider.cloneWithRows(items);
+  }, [items]);
+
+  const rowRender = useCallback(
+    (viewTypes: string | number, data: number) => {
+      const onPress = () => {
+        setItems(list => list.filter(i => i !== data));
+      };
+
+      switch (viewTypes) {
+        case ViewTypes.GREY:
+          return (
+            <CellContainer type="grey" onPress={onPress}>
+              <Text>Data: {data}</Text>
+            </CellContainer>
+          );
+        case ViewTypes.WHITE:
+          return (
+            <CellContainer type="white" onPress={onPress}>
+              <Text>Data: {data}</Text>
+            </CellContainer>
+          );
+        default:
+          return null;
+      }
+    },
+    [setItems],
+  );
+
   return (
     <SafeAreaView
       style={{
@@ -112,20 +134,13 @@ const Flash = () => {
 
   const renderItem = ({item}: {item: number; index: number}) => {
     return (
-      <Pressable
-        style={{
-          backgroundColor: item % 2 ? 'grey' : 'white',
-        }}
+      <CellContainer
+        type={item % 2 ? 'grey' : 'white'}
         onPress={() => {
           removeItem(item);
         }}>
-        <View
-          style={{
-            padding: 16,
-          }}>
-          <Text>Cell Id: {item}</Text>
-        </View>
-      </Pressable>
+        <Text>Data: {item}</Text>
+      </CellContainer>
     );
   };
 
@@ -149,4 +164,44 @@ const Flash = () => {
   );
 };
 
-export default Recycler;
+const Flat = () => {
+  const [data, setData] = useState(generateItems(100));
+
+  const removeItem = (item: number) => {
+    setData(
+      data.filter(dataItem => {
+        return dataItem !== item;
+      }),
+    );
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  };
+
+  const renderItem = ({item}: {item: number; index: number}) => {
+    return (
+      <CellContainer
+        type={item % 2 ? 'grey' : 'white'}
+        onPress={() => {
+          removeItem(item);
+        }}>
+        <Text>Data: {item}</Text>
+      </CellContainer>
+    );
+  };
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+      }}>
+      <FlatList
+        keyExtractor={(item: number) => {
+          return item.toString();
+        }}
+        renderItem={renderItem}
+        data={data}
+      />
+    </SafeAreaView>
+  );
+};
+
+export default Flat;
