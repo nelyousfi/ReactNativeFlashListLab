@@ -1,7 +1,7 @@
 ## Open questions:
 
 - [ ] How the recyclerlistview was adjusted into the flash list?
-- [ ] Why and how the flash list is using the native module for?
+- [ ] Why and how the flash list is using the native module for? https://youtu.be/BrYxGrE9sW8?t=469
 - [ ] How useOnNativeBlankAreaEvents is working under the hood?
 - [ ] Is MasonryFlashList is also based on the recyclerlistview?
 

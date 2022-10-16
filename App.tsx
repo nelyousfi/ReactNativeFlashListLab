@@ -1,12 +1,14 @@
 import {FlashList} from '@shopify/flash-list';
-import React, {useRef, useState} from 'react';
+import React, {ReactNode, useRef, useState} from 'react';
 import {
+  Dimensions,
   LayoutAnimation,
   Pressable,
   SafeAreaView,
   Text,
   View,
 } from 'react-native';
+import {DataProvider, LayoutProvider, RecyclerListView} from 'recyclerlistview';
 
 const generateItems = (n: number): Array<number> => {
   return Array.from(Array(n)).map((_, i) => {
@@ -14,7 +16,84 @@ const generateItems = (n: number): Array<number> => {
   });
 };
 
-const List = () => {
+enum ViewTypes {
+  GREY = 'grey',
+  WHITE = 'white',
+}
+
+const {width} = Dimensions.get('window');
+
+const layoutProvider = new LayoutProvider(
+  index => (index % 2 ? ViewTypes.GREY : ViewTypes.WHITE),
+  (_, dim) => {
+    // this part is ignored when forceNonDeterministicRendering is true
+    dim.height = 50;
+    dim.width = width;
+  },
+);
+
+const dataProvider = new DataProvider((r1, r2) => {
+  return r1 !== r2;
+}).cloneWithRows(generateItems(10000));
+
+let counter = 0;
+
+const CellContainer = ({
+  type,
+  children,
+}: {
+  type: 'grey' | 'white';
+  children: ReactNode;
+}) => {
+  const count = useRef(counter++);
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: type,
+      }}>
+      <Text>{count.current}</Text>
+      {children}
+    </View>
+  );
+};
+
+const rowRender = (viewTypes: string | number, data: number) => {
+  switch (viewTypes) {
+    case ViewTypes.GREY:
+      return (
+        <CellContainer type="grey">
+          <Text>Data: {data}</Text>
+        </CellContainer>
+      );
+    case ViewTypes.WHITE:
+      return (
+        <CellContainer type="white">
+          <Text>Data: {data}</Text>
+        </CellContainer>
+      );
+    default:
+      return null;
+  }
+};
+
+const Recycler = () => {
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+      }}>
+      <RecyclerListView
+        layoutProvider={layoutProvider}
+        dataProvider={dataProvider}
+        rowRenderer={rowRender}
+        forceNonDeterministicRendering
+      />
+    </SafeAreaView>
+  );
+};
+
+const Flash = () => {
   const [data, setData] = useState(generateItems(1000));
 
   const list = useRef<FlashList<number> | null>(null);
@@ -70,4 +149,4 @@ const List = () => {
   );
 };
 
-export default List;
+export default Recycler;
