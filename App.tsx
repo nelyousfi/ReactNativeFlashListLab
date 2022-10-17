@@ -9,7 +9,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import {DataProvider, LayoutProvider, RecyclerListView} from 'recyclerlistview';
+import {
+  DataProvider,
+  LayoutProvider,
+  ProgressiveListView,
+} from 'recyclerlistview';
 
 const generateItems = (n: number): Array<number> => {
   return Array.from(Array(n)).map((_, i) => {
@@ -68,12 +72,13 @@ const provider = new DataProvider((r1, r2) => {
 });
 
 const Recycler = () => {
-  const [items, setItems] = useState(generateItems(1000));
+  const [items, setItems] = useState(generateItems(10));
 
   const dataProvider = useMemo(() => {
     return provider.cloneWithRows(items);
   }, [items]);
 
+  // (item: Item, index: number) => ReactNode
   const rowRender = useCallback(
     (viewTypes: string | number, data: number) => {
       const onPress = () => {
@@ -89,9 +94,9 @@ const Recycler = () => {
           );
         case ViewTypes.WHITE:
           return (
-            <CellContainer type="white" onPress={onPress}>
+            <View style={{backgroundColor: 'red', marginVertical: 20}}>
               <Text>Data: {data}</Text>
-            </CellContainer>
+            </View>
           );
         default:
           return null;
@@ -105,9 +110,22 @@ const Recycler = () => {
       style={{
         flex: 1,
       }}>
-      <RecyclerListView
+      <ProgressiveListView
         layoutProvider={layoutProvider}
         dataProvider={dataProvider}
+        renderItemContainer={(props, parentProps, children) => {
+          return (
+            <View
+              {...parentProps}
+              style={{
+                ...props.style,
+                paddingHorizontal: 20,
+              }}>
+              <Text>Hello</Text>
+              {children}
+            </View>
+          );
+        }}
         rowRenderer={rowRender}
         forceNonDeterministicRendering
       />
@@ -154,7 +172,7 @@ const Flash = () => {
         ref={list}
         // This prop is necessary to uniquely identify the elements in the list.
         keyExtractor={(item: number) => {
-          return item.toString();
+          return item.toString() + ' hello';
         }}
         renderItem={renderItem}
         estimatedItemSize={50}
@@ -204,4 +222,4 @@ const Flat = () => {
   );
 };
 
-export default Flat;
+export default Recycler;
